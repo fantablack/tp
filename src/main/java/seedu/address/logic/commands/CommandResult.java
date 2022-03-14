@@ -9,7 +9,7 @@ import java.util.Objects;
  */
 public class CommandResult {
 
-    public final String feedbackToUser;
+    private final String feedbackToUser;
 
     /** Help information should be shown to the user. */
     private final boolean showHelp;
