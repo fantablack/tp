@@ -29,4 +29,7 @@ public interface Storage extends AddressBookStorage, UserPrefsStorage {
     @Override
     void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException;
 
+    Optional<ReadOnlyAddressBook> readAddressBookArchived() throws DataConversionException, IOException;
+
+    Path getAddressBookFilePathArchived();
 }

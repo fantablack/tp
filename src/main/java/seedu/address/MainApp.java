@@ -57,7 +57,9 @@ public class MainApp extends Application {
         UserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(config.getUserPrefsFilePath());
         UserPrefs userPrefs = initPrefs(userPrefsStorage);
         AddressBookStorage addressBookStorage = new JsonAddressBookStorage(userPrefs.getAddressBookFilePath());
-        storage = new StorageManager(addressBookStorage, userPrefsStorage);
+        AddressBookStorage addressBookStorageArchived = new JsonAddressBookStorage(
+                                                        userPrefs.getAddressBookFilePathArchived());
+        storage = new StorageManager(addressBookStorage, addressBookStorageArchived, userPrefsStorage);
 
         initLogging(config);
 
@@ -75,7 +77,10 @@ public class MainApp extends Application {
      */
     private Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
         Optional<ReadOnlyAddressBook> addressBookOptional;
+        Optional<ReadOnlyAddressBook> addressBookArchivedOptional;
+
         ReadOnlyAddressBook initialData;
+        ReadOnlyAddressBook intialDataArchived;
         try {
             addressBookOptional = storage.readAddressBook();
             if (!addressBookOptional.isPresent()) {
@@ -90,7 +95,23 @@ public class MainApp extends Application {
             initialData = new AddressBook();
         }
 
-        return new ModelManager(initialData, userPrefs);
+        try {
+            addressBookArchivedOptional = storage.readAddressBookArchived();
+            if (!addressBookArchivedOptional.isPresent()) {
+                logger.info("Archived Data file not found. Will be starting with a sample Archived AddressBook");
+            }
+            intialDataArchived = addressBookArchivedOptional.orElseGet(SampleDataUtil::getSampleAddressBook);
+        } catch (DataConversionException e) {
+            logger.warning("Archived Data file not in the correct format. Will be starting with an empty "
+                            + "Archived AddressBook");
+            intialDataArchived = new AddressBook();
+        } catch (IOException e) {
+            logger.warning("Problem while reading from the file. Will be starting with an empty "
+                            + "Archived AddressBook");
+            intialDataArchived = new AddressBook();
+        }
+
+        return new ModelManager(initialData, intialDataArchived, userPrefs);
     }
 
     private void initLogging(Config config) {
